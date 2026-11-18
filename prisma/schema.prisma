@@ -1,0 +1,195 @@
+// PowerPulse data model.
+// Every piece of public content (products, plans, projects, testimonials,
+// FAQs, site copy) lives here so it can be managed from /admin.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum ProductStatus {
+  PUBLISHED
+  DRAFT
+  IN_DEVELOPMENT
+  COMING_SOON
+  ARCHIVED
+}
+
+enum PlanScope {
+  ECOSYSTEM
+  PRODUCT
+}
+
+enum ProjectStatus {
+  COMPLETED
+  IN_PROGRESS
+  UPCOMING
+  DEMO
+}
+
+enum InquiryType {
+  SALES
+  PARTNERSHIP
+  SUPPORT
+  DEMO
+  GENERAL
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  createdAt    DateTime @default(now())
+}
+
+model Category {
+  id          String    @id @default(cuid())
+  name        String
+  slug        String    @unique
+  description String    @default("")
+  icon        String    @default("boxes")
+  sortOrder   Int       @default(0)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+}
+
+model Product {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  name             String
+  tagline          String        @default("")
+  shortDescription String        @default("")
+  overview         String        @default("") @db.Text
+  logoUrl          String?
+  heroImageUrl     String?
+  videoUrl         String?
+  icon             String        @default("boxes")
+  accentColor      String        @default("#3478FF")
+  visualShape      String        @default("icosahedron")
+  status           ProductStatus @default(DRAFT)
+  featured         Boolean       @default(false)
+  isNew            Boolean       @default(false)
+  sortOrder        Int           @default(0)
+  /// [{ "title": string, "description": string }]
+  features         Json          @default("[]")
+  /// string[]
+  benefits         Json          @default("[]")
+  /// string[]
+  audience         Json          @default("[]")
+  /// string[] of image URLs
+  screenshots      Json          @default("[]")
+  categoryId       String?
+  category         Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  plans            Plan[]
+  faqs             Faq[]
+  inquiries        Inquiry[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([status])
+}
+
+model Plan {
+  id           String    @id @default(cuid())
+  name         String
+  description  String    @default("")
+  scope        PlanScope @default(ECOSYSTEM)
+  productId    String?
+  product      Product?  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// Prices are stored in whole cents. Null + isCustom = "Contact sales".
+  monthlyCents Int?
+  yearlyCents  Int?
+  currency     String    @default("USD")
+  isCustom     Boolean   @default(false)
+  highlighted  Boolean   @default(false)
+  /// string[]
+  features     Json      @default("[]")
+  /// [{ "label": string, "value": string }]
+  limits       Json      @default("[]")
+  /// Human-readable description of which products the plan unlocks
+  productAccess String   @default("")
+  supportLevel String    @default("")
+  ctaLabel     String    @default("Get started")
+  active       Boolean   @default(true)
+  sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  title       String
+  summary     String        @default("")
+  description String        @default("") @db.Text
+  category    String        @default("")
+  status      ProjectStatus @default(DEMO)
+  imageUrl    String?
+  accentColor String        @default("#00D4FF")
+  /// string[]
+  tags        Json          @default("[]")
+  published   Boolean       @default(true)
+  sortOrder   Int           @default(0)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Testimonial {
+  id        String   @id @default(cuid())
+  name      String
+  role      String   @default("")
+  company   String   @default("")
+  quote     String   @db.Text
+  avatarUrl String?
+  rating    Int      @default(5)
+  /// Shown with a visible "Sample" label on the site while true.
+  isSample  Boolean  @default(true)
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Faq {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String   @db.Text
+  /// Null = general FAQ shown on home/pricing; set = product page FAQ.
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+  published Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+model Inquiry {
+  id        String      @id @default(cuid())
+  type      InquiryType @default(GENERAL)
+  name      String
+  email     String
+  company   String      @default("")
+  message   String      @db.Text
+  productId String?
+  product   Product?    @relation(fields: [productId], references: [id], onDelete: SetNull)
+  planName  String      @default("")
+  handled   Boolean     @default(false)
+  createdAt DateTime    @default(now())
+}
+
+/// Free-form site content (hero copy, stats, contact details, socials...).
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
