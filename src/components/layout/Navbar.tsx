@@ -16,6 +16,8 @@ const links = [
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];
+// RestoPulse Tablet is a static offline app (public/restopulse-tablet), so it gets a plain link, not a Next route.
+const TABLET = { href: "/restopulse-tablet", label: "Tablet App" };
 
 export function Navbar({ signedIn, isAdmin }: { signedIn: boolean; isAdmin: boolean }) {
   const pathname = usePathname();
@@ -65,6 +67,11 @@ export function Navbar({ signedIn, isAdmin }: { signedIn: boolean; isAdmin: bool
               </Link>
             </li>
           ))}
+          <li>
+            <a href={TABLET.href} className="relative inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-text-2 transition-colors hover:text-text">
+              {TABLET.label}<span className="rounded bg-[#ffc800] px-1.5 py-px text-[10px] font-bold leading-4 text-[#0c0b09]">OFFLINE</span>
+            </a>
+          </li>
         </ul>
         <div className="hidden items-center gap-2 lg:flex">
           <Link href={account.href} className="rounded-full px-4 py-2 text-sm font-medium text-text-2 transition-colors hover:text-text">{account.label}</Link>
@@ -100,6 +107,11 @@ export function Navbar({ signedIn, isAdmin }: { signedIn: boolean; isAdmin: bool
                   </Link>
                 </motion.li>
               ))}
+              <li>
+                <a href={TABLET.href} className="flex min-h-12 items-center gap-2 rounded-xl px-4 text-base font-medium text-text-2">
+                  {TABLET.label}<span className="rounded bg-[#ffc800] px-1.5 py-px text-[10px] font-bold leading-4 text-[#0c0b09]">OFFLINE</span>
+                </a>
+              </li>
             </ul>
             <div className="mt-3 grid grid-cols-2 gap-2 border-t border-white/10 pt-3">
               <ButtonLink href={account.href} variant="secondary">{account.label}</ButtonLink>

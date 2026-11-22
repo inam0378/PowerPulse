@@ -7,6 +7,7 @@ import { CategoryExplorer } from "@/components/sections/CategoryExplorer";
 import { PricingTable } from "@/components/sections/PricingTable";
 import { FaqList } from "@/components/sections/FaqList";
 import { CtaBand } from "@/components/sections/CtaBand";
+import { TabletAppBand } from "@/components/sections/TabletAppBand";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { ButtonLink } from "@/components/ui/Button";
 import { Counter } from "@/components/ui/Counter";
@@ -39,6 +40,8 @@ export default async function HomePage() {
   return (
     <>
       <Hero settings={settings} products={products} />
+
+      <TabletAppBand />
 
       {/* Introduction + ecosystem overview */}
       <section id="ecosystem" className="container-pp scroll-mt-24 py-24">
