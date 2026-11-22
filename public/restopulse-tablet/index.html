@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>RestoPulse Tablet · Offline version</title>
+<meta name="description" content="RestoPulse Tablet: the offline restaurant POS for Android tablets and phones. Works with no internet. All data stays on the device.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0c0b09">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root{--bg:#0c0b09;--card:#16140f;--line:#2c281e;--fg:#f5f1e3;--mut:#a59f8a;--y:#ffc800;--warn:#2a1d08;--warnb:#6b4b0c;--ok:#5fd07a}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left))}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top img{width:52px;height:52px;border-radius:12px}
+.brand{font-weight:800;font-size:22px;letter-spacing:.02em}
+.brand small{display:block;font-weight:500;font-size:13px;color:var(--mut)}
+.tags{display:flex;gap:8px;flex-wrap:wrap;margin:22px 0 10px}
+.tag{font-size:12px;font-weight:800;letter-spacing:.08em;border-radius:7px;padding:5px 10px;background:var(--y);color:var(--bg)}
+.tag.o{background:transparent;color:var(--y);border:1.5px solid var(--y)}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.1;margin:6px 0 10px;text-wrap:balance}
+.lead{color:#d6cfb8;max-width:60ch;margin:0 0 22px}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 22px;border-radius:12px;font-weight:800;font-size:16px;text-decoration:none;border:0;cursor:pointer}
+.btn.y{background:var(--y);color:var(--bg)}
+.btn.s{background:transparent;color:var(--fg);border:1.5px solid var(--line)}
+.btn[hidden]{display:none}
+.note{font-size:13px;color:var(--mut);margin-top:10px;min-height:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:30px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;min-width:0}
+.card h2{font-size:17px;margin:0 0 6px}
+.card p,.card li{color:#d6cfb8;font-size:14.5px}
+.card ul,.card ol{margin:6px 0 0;padding-left:20px}
+.card li{margin:4px 0}
+.resp{background:var(--warn);border:1.5px solid var(--warnb);border-radius:16px;padding:18px;margin-top:30px}
+.resp h2{margin:0 0 6px;font-size:18px;color:var(--y)}
+.resp p{margin:6px 0;font-size:14.5px}
+.ur{direction:rtl;text-align:right;font-size:15px;color:#efe6c8;border-top:1px solid var(--warnb);padding-top:10px;margin-top:10px}
+.diff{margin-top:30px;overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{border-bottom:1px solid var(--line);padding:10px;text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.05em}
+td:first-child{color:var(--mut)}
+.foot{margin-top:34px;color:var(--mut);font-size:13px}
+.foot b{color:var(--fg)}
+.num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><img src="icon-192.png" alt=""><div class="brand">RestoPulse<small>by Power Pulse, Lahore</small></div></div>
+
+  <div class="tags"><span class="tag">TABLET VERSION</span><span class="tag">OFFLINE VERSION</span><span class="tag o">SEPARATE FROM CLOUD &amp; PC</span></div>
+  <h1>Restaurant POS that runs on your Android tablet, with no internet</h1>
+  <p class="lead">Install once from this page. After that RestoPulse opens and bills with WiFi and mobile data switched off. Menu, orders, sales reports, kitchen and waiters all work on the tablet or phone itself.</p>
+
+  <div class="btns">
+    <button class="btn y" id="inst" hidden>Install on this device</button>
+    <a class="btn y" id="open" href="app.html">Open RestoPulse Tablet</a>
+  </div>
+  <div class="note" id="note"></div>
+
+  <div class="resp" id="responsibility">
+    <h2>Your data, your responsibility</h2>
+    <p>All data (menu, orders, sales, staff and settings) is saved <b>only inside this tablet or phone</b>. It is never sent to Power Pulse or to any server, so Power Pulse has no copy and cannot recover it.</p>
+    <p><b>The shopkeeper alone is responsible for this data</b>, including taking regular backups. If the app or Chrome's data is cleared, or the device is reset, lost or damaged, the data is gone unless you have a backup file.</p>
+    <p class="ur">تمام ڈیٹا صرف اسی ٹیبلٹ یا فون میں محفوظ ہوتا ہے۔ اس ڈیٹا کی مکمل ذمہ داری صرف دکاندار کی ہے، پاور پلس کی نہیں۔ ہر ہفتے بیک اپ فائل ضرور ڈاؤن لوڈ کریں۔</p>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h2>Install on Android</h2>
+      <ol>
+        <li>Open this page in <b>Google Chrome</b> on the tablet or phone (internet needed only now).</li>
+        <li>Tap <b>Install on this device</b>. If you do not see it: Chrome menu <b>⋮</b> → <b>Install app</b> (or <b>Add to Home screen</b>).</li>
+        <li>Open <b>RestoPulse Tablet</b> from the home screen once while online, so every file is saved.</li>
+        <li>Switch the internet off. It keeps working.</li>
+      </ol></div>
+    <div class="card"><h2>First start</h2>
+      <ul>
+        <li>Enter the restaurant name and make the owner password.</li>
+        <li>Write down the <b>recovery code</b> it shows. It is the only way to reset a forgotten owner password.</li>
+        <li>Send the <b>device code</b> to Power Pulse to get your license key.</li>
+      </ul></div>
+    <div class="card"><h2>Backups</h2>
+      <ul>
+        <li>Settings → Tablet → <b>Download backup file</b>.</li>
+        <li>Keep it off the device: WhatsApp or Gmail it to yourself, or save it to Google Drive.</li>
+        <li>Do it at least once a week. A new or reset tablet restores from this file.</li>
+      </ul></div>
+    <div class="card"><h2>Printing</h2>
+      <ul>
+        <li>Uses Android's print system (58 mm or 80 mm receipts).</li>
+        <li>For a thermal printer, install its print service app from the Play Store and switch it on in Settings → Connected devices → Printing.</li>
+      </ul></div>
+  </div>
+
+  <div class="diff">
+    <table>
+      <thead><tr><th></th><th>Tablet (this page)</th><th>Offline PC version</th><th>Cloud version</th></tr></thead>
+      <tbody>
+        <tr><td>Runs on</td><td>One Android tablet or phone</td><td>Windows counter PC + phones on shop WiFi</td><td>Any device, anywhere</td></tr>
+        <tr><td>Internet</td><td>Only to install</td><td>Not needed</td><td>Always needed</td></tr>
+        <tr><td>Data kept</td><td>On this device only</td><td>On the counter PC only</td><td>Secure cloud</td></tr>
+        <tr><td>Several devices together</td><td>No</td><td>Yes (shop WiFi)</td><td>Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p class="foot">License, help or the cloud version: WhatsApp <b class="num">0310-0007049</b> · Power Pulse, Lahore. Needs Android 8 or newer with an up-to-date Google Chrome.</p>
+</div>
+<script>
+(function(){
+  var inst=document.getElementById("inst"),note=document.getElementById("note"),ev=null;
+  var standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+  if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(function(r){return navigator.serviceWorker.ready}).then(function(){if(!standalone)note.textContent="Ready to work offline on this device."}).catch(function(){note.textContent="Offline files could not be saved. Use Google Chrome, not Incognito."})}
+  else note.textContent="This browser cannot install RestoPulse. Please use Google Chrome.";
+  addEventListener("beforeinstallprompt",function(e){e.preventDefault();ev=e;inst.hidden=false});
+  inst.onclick=function(){if(!ev)return;ev.prompt();ev.userChoice.then(function(c){if(c.outcome==="accepted"){inst.hidden=true;note.textContent="Installed. Open RestoPulse Tablet from the home screen."}ev=null})};
+  addEventListener("appinstalled",function(){inst.hidden=true;note.textContent="Installed. Open RestoPulse Tablet from the home screen."});
+  if(standalone)location.replace("app.html");
+})();
+</script>
+</body>
+</html>

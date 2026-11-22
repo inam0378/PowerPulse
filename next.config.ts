@@ -18,7 +18,15 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      {
+        // RestoPulse Tablet (offline PWA): the barcode scanner may use the tablet camera
+        source: "/restopulse-tablet/:path*",
+        headers: [{ key: "Permissions-Policy", value: "camera=(self), microphone=(), geolocation=()" }],
+      },
     ];
+  },
+  async rewrites() {
+    return [{ source: "/restopulse-tablet", destination: "/restopulse-tablet/index.html" }];
   },
 };
 
