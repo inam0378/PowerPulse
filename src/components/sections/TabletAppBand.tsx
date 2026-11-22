@@ -30,7 +30,7 @@ export function TabletAppBand() {
               <b className="text-[#ffc800]">Your data, your responsibility:</b> all data is saved only on the tablet/phone. The shopkeeper alone is responsible for it and for taking backups.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <a href="/restopulse-tablet" className={buttonClass("secondary", "lg", "!border-[#ffc800] !bg-[#ffc800] !text-[#0c0b09] hover:!bg-[#ffd633]")}>
+              <a href="/restopulse-tablet/index.html" className={buttonClass("secondary", "lg", "!border-[#ffc800] !bg-[#ffc800] !text-[#0c0b09] hover:!bg-[#ffd633]")}>
                 Install RestoPulse Tablet <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
               </a>
               <a href="/restopulse-tablet/app.html" className={buttonClass("secondary", "lg")}>Open the app</a>

@@ -25,8 +25,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  async rewrites() {
-    return [{ source: "/restopulse-tablet", destination: "/restopulse-tablet/index.html" }];
+  async redirects() {
+    // The tablet app's files use relative links, so its page must be opened inside the /restopulse-tablet/ folder.
+    return [{ source: "/restopulse-tablet", destination: "/restopulse-tablet/index.html", permanent: false }];
   },
 };
 

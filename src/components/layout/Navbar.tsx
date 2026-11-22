@@ -17,7 +17,7 @@ const links = [
   { href: "/contact", label: "Contact" },
 ];
 // RestoPulse Tablet is a static offline app (public/restopulse-tablet), so it gets a plain link, not a Next route.
-const TABLET = { href: "/restopulse-tablet", label: "Tablet App" };
+const TABLET = { href: "/restopulse-tablet/index.html", label: "Tablet App" };
 
 export function Navbar({ signedIn, isAdmin }: { signedIn: boolean; isAdmin: boolean }) {
   const pathname = usePathname();
