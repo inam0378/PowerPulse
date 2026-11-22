@@ -1,6 +1,6 @@
 /* RestoPulse Tablet service worker: keeps every app file on the device so RestoPulse opens with no internet.
    No data passes through here: menu, orders and sales live in this device's storage (IndexedDB). */
-const CACHE = "rp-tablet-508a40f5f2";
+const CACHE = "rp-tablet-a46667ce79";
 const FILES = ["index.html", "app.html", "rp-core.js", "rp-shim.js", "nacl.min.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: "reload" })))).then(() => self.skipWaiting()));

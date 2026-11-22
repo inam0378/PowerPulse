@@ -6,10 +6,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>RestoPulse Tablet · Offline version</title>
 <meta name="description" content="RestoPulse Tablet: the offline restaurant POS for Android tablets and phones. Works with no internet. All data stays on the device.">
-<link rel="manifest" href="manifest.webmanifest">
+<link rel="manifest" href="/restopulse-tablet/manifest.webmanifest">
 <meta name="theme-color" content="#0c0b09">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="/restopulse-tablet/icon-192.png">
+<link rel="apple-touch-icon" href="/restopulse-tablet/apple-touch-icon.png">
 <style>
 :root{--bg:#0c0b09;--card:#16140f;--line:#2c281e;--fg:#f5f1e3;--mut:#a59f8a;--y:#ffc800;--warn:#2a1d08;--warnb:#6b4b0c;--ok:#5fd07a}
 *{box-sizing:border-box}
@@ -52,7 +52,7 @@ td:first-child{color:var(--mut)}
 </head>
 <body>
 <div class="wrap">
-  <div class="top"><img src="icon-192.png" alt=""><div class="brand">RestoPulse<small>by Power Pulse, Lahore</small></div></div>
+  <div class="top"><img src="/restopulse-tablet/icon-192.png" alt=""><div class="brand">RestoPulse<small>by Power Pulse, Lahore</small></div></div>
 
   <div class="tags"><span class="tag">TABLET VERSION</span><span class="tag">OFFLINE VERSION</span><span class="tag o">SEPARATE FROM CLOUD &amp; PC</span></div>
   <h1>Restaurant POS that runs on your Android tablet, with no internet</h1>
@@ -60,7 +60,7 @@ td:first-child{color:var(--mut)}
 
   <div class="btns">
     <button class="btn y" id="inst" hidden>Install on this device</button>
-    <a class="btn y" id="open" href="app.html">Open RestoPulse Tablet</a>
+    <a class="btn y" id="open" href="/restopulse-tablet/app.html">Open RestoPulse Tablet</a>
   </div>
   <div class="note" id="note"></div>
 
@@ -116,12 +116,12 @@ td:first-child{color:var(--mut)}
 (function(){
   var inst=document.getElementById("inst"),note=document.getElementById("note"),ev=null;
   var standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
-  if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(function(r){return navigator.serviceWorker.ready}).then(function(){if(!standalone)note.textContent="Ready to work offline on this device."}).catch(function(){note.textContent="Offline files could not be saved. Use Google Chrome, not Incognito."})}
+  if("serviceWorker" in navigator){navigator.serviceWorker.register("/restopulse-tablet/sw.js",{scope:"/restopulse-tablet/"}).then(function(r){return navigator.serviceWorker.ready}).then(function(){if(!standalone)note.textContent="Ready to work offline on this device."}).catch(function(){note.textContent="Offline files could not be saved. Use Google Chrome, not Incognito."})}
   else note.textContent="This browser cannot install RestoPulse. Please use Google Chrome.";
   addEventListener("beforeinstallprompt",function(e){e.preventDefault();ev=e;inst.hidden=false});
   inst.onclick=function(){if(!ev)return;ev.prompt();ev.userChoice.then(function(c){if(c.outcome==="accepted"){inst.hidden=true;note.textContent="Installed. Open RestoPulse Tablet from the home screen."}ev=null})};
   addEventListener("appinstalled",function(){inst.hidden=true;note.textContent="Installed. Open RestoPulse Tablet from the home screen."});
-  if(standalone)location.replace("app.html");
+  if(standalone)location.replace("/restopulse-tablet/app.html");
 })();
 </script>
 </body>
