@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { FolderKanban, HelpCircle, Inbox, LayoutDashboard, Package, Quote, Settings, Tags, Users, Wallet } from "lucide-react";
+import { FolderKanban, HelpCircle, Inbox, KeyRound, LayoutDashboard, Package, Quote, Settings, Tags, Users, Wallet } from "lucide-react";
 
 const items = [
   { href: "/admin", label: "Overview", icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const items = [
   { href: "/admin/testimonials", label: "Testimonials", icon: Quote },
   { href: "/admin/faqs", label: "FAQs", icon: HelpCircle },
   { href: "/admin/inquiries", label: "Inquiries", icon: Inbox },
+  { href: "/admin/licenses", label: "RestoPulse licenses", icon: KeyRound },
   { href: "/admin/settings", label: "Site content", icon: Settings },
   { href: "/admin/users", label: "Users", icon: Users },
 ];

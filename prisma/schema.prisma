@@ -193,3 +193,21 @@ model Setting {
   value     Json
   updatedAt DateTime @updatedAt
 }
+
+/// RestoPulse offline license keys issued from /admin/licenses (laptop/PC and tablet).
+model License {
+  id          String   @id @default(cuid())
+  kind        String // "PC" (laptop / counter PC, code RP-…) or "TABLET" (code RT-…)
+  machineCode String
+  name        String
+  devices     Int      @default(1)
+  expires     String? // YYYY-MM-DD, null = lifetime
+  phone       String   @default("")
+  note        String   @default("")
+  key         String   @db.Text
+  issuedBy    String   @default("")
+  createdAt   DateTime @default(now())
+
+  @@index([machineCode])
+  @@index([createdAt])
+}
