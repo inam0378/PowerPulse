@@ -1,4 +1,4 @@
-import { KeyRound, Laptop, Tablet, TriangleAlert } from "lucide-react";
+import { KeyRound, Laptop, Milk, Tablet, TriangleAlert } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { PageHeader, Empty } from "@/components/admin/PageHeader";
 import { AdminForm } from "@/components/admin/AdminForm";
@@ -12,7 +12,9 @@ export const dynamic = "force-dynamic";
 
 const fmt = (d: Date) => d.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Karachi" });
 const validity = (e: string | null) => (e ? `until ${new Date(e + "T12:00:00Z").toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}` : "Lifetime");
-const KindBadge = ({ kind }: { kind: string }) => (
+const KindBadge = ({ kind }: { kind: string }) => kind === "MILK" ? (
+  <span className="inline-flex items-center gap-1 rounded-md bg-[#2d6cdf] px-2 py-0.5 text-xs font-bold text-white"><Milk className="size-3.5" aria-hidden="true" />DoodhPulse</span>
+) : (
   <span className={kind === "TABLET" ? "inline-flex items-center gap-1 rounded-md bg-[#ffc800] px-2 py-0.5 text-xs font-bold text-[#0c0b09]" : "inline-flex items-center gap-1 rounded-md bg-cyan px-2 py-0.5 text-xs font-bold text-bg"}>
     {kind === "TABLET" ? <Tablet className="size-3.5" aria-hidden="true" /> : <Laptop className="size-3.5" aria-hidden="true" />}{kind === "TABLET" ? "Tablet" : "Laptop / PC"}
   </span>
@@ -36,11 +38,11 @@ export default async function Licenses({ searchParams }: { searchParams: Promise
     prisma.license.groupBy({ by: ["kind"], _count: true }),
   ]);
   const count = (k: string) => counts.find((c) => c.kind === k)?._count ?? 0;
-  const msg = issued && `RestoPulse ${issued.kind === "TABLET" ? "Tablet " : ""}license for ${issued.name}\nCode: ${issued.machineCode}\n${issued.kind === "TABLET" ? "1 device" : issued.devices + " devices (counter PC included)"} · ${validity(issued.expires)}\n\nLicense key (copy all of it and paste it in RestoPulse → Activate):\n${issued.key}`;
+  const msg = issued && (issued.kind === "MILK" ? `DoodhPulse license for ${issued.name}\nDevice code: ${issued.machineCode}\n1 phone · ${validity(issued.expires)}\n\nCopy ALL of the key below and paste it in DoodhPulse → Activate:\n${issued.key}` : `RestoPulse ${issued.kind === "TABLET" ? "Tablet " : ""}license for ${issued.name}\nCode: ${issued.machineCode}\n${issued.kind === "TABLET" ? "1 device" : issued.devices + " devices (counter PC included)"} · ${validity(issued.expires)}\n\nLicense key (copy all of it and paste it in RestoPulse → Activate):\n${issued.key}`);
 
   return (
     <div className="max-w-5xl">
-      <PageHeader title="RestoPulse licenses" description="One place to make license keys for both offline versions: laptop / counter PC (codes start with RP-) and tablet / phone (codes start with RT-). Every key you make is saved below." />
+      <PageHeader title="RestoPulse licenses" description="One place to make license keys for both offline versions: laptop / counter PC (codes start with RP-) tablet / phone (codes start with RT-) and the DoodhPulse milk shop app (codes start with MD-). Every key you make is saved below." />
 
       {status !== "ok" && (
         <div role="alert" className="mb-8 rounded-2xl border border-warning/40 bg-warning/10 p-5 text-sm leading-relaxed">
@@ -59,7 +61,7 @@ export default async function Licenses({ searchParams }: { searchParams: Promise
       {issued && msg && (
         <section aria-label="New license key" className="mb-8 rounded-2xl border border-success/40 bg-success/10 p-5">
           <p className="flex flex-wrap items-center gap-2 font-semibold text-success"><KeyRound className="size-4" aria-hidden="true" />License key ready <KindBadge kind={issued.kind} /></p>
-          <p className="mt-2 text-sm text-text-2">{issued.name} · <span className="font-mono text-text">{issued.machineCode}</span> · {issued.kind === "TABLET" ? "1 device" : `${issued.devices} devices`} · {validity(issued.expires)}</p>
+          <p className="mt-2 text-sm text-text-2">{issued.name} · <span className="font-mono text-text">{issued.machineCode}</span> · {issued.kind !== "PC" ? "1 device" : `${issued.devices} devices`} · {validity(issued.expires)}</p>
           <textarea readOnly rows={3} value={issued.key} aria-label="License key" className="field mt-3 font-mono text-xs break-all" />
           <div className="mt-3 flex flex-wrap gap-2">
             <CopyButton text={issued.key} label="Copy key" />
@@ -72,8 +74,8 @@ export default async function Licenses({ searchParams }: { searchParams: Promise
       <div className="grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div className="min-w-0">
           <AdminForm action={issueLicense} submitLabel="Make license key">
-            <Section title="New license" description="Paste the code the client sees in RestoPulse (Settings → Offline / Tablet, or the Activate screen). RP- = laptop / PC, RT- = tablet / phone.">
-              <Text label="Machine / device code" name="machineCode" required placeholder="RP-1A2B-3C4D-5E6F or RT-1A2B-3C4D-5E6F" className="sm:col-span-2" />
+            <Section title="New license" description="Paste the code the client sees in RestoPulse (Settings → Offline / Tablet, or the Activate screen). RP- = laptop / PC, RT- = tablet / phone, MD- = DoodhPulse milk shop app.">
+              <Text label="Machine / device code" name="machineCode" required placeholder="RP-…, RT-… or MD-1A2B-3C4D-5E6F" className="sm:col-span-2" />
               <Text label="Restaurant name" name="name" required placeholder="e.g. Shawarma Point, Johar Town" className="sm:col-span-2" />
               <Select label="Devices (laptop / PC only)" name="devices" defaultValue="2" options={[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => ({ value: String(n), label: n === 1 ? "1 · counter PC only" : `${n} · counter PC + ${n - 1}` }))} hint="Tablet licenses are always 1 device." />
               <Select label="Valid for" name="validity" defaultValue="L" options={[{ value: "L", label: "Lifetime" }, { value: "1", label: "1 month" }, { value: "3", label: "3 months" }, { value: "6", label: "6 months" }, { value: "12", label: "1 year" }, { value: "24", label: "2 years" }, { value: "date", label: "Until a date (below)" }]} />
@@ -87,7 +89,7 @@ export default async function Licenses({ searchParams }: { searchParams: Promise
         <div className="min-w-0">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 className="font-display text-lg font-semibold">Issued keys</h2>
-            <p className="text-sm text-text-2">Laptop / PC: <b className="text-text">{count("PC")}</b> · Tablet: <b className="text-text">{count("TABLET")}</b></p>
+            <p className="text-sm text-text-2">Laptop / PC: <b className="text-text">{count("PC")}</b> · Tablet: <b className="text-text">{count("TABLET")}</b> · DoodhPulse: <b className="text-text">{count("MILK")}</b></p>
           </div>
           <form className="mb-3 flex gap-2" action="/admin/licenses">
             <input name="q" defaultValue={q} placeholder="Search code, restaurant or phone" className="field min-w-0 flex-1" />
@@ -98,7 +100,7 @@ export default async function Licenses({ searchParams }: { searchParams: Promise
               {rows.map((r) => (
                 <li key={r.id} className="p-4">
                   <div className="flex flex-wrap items-center gap-2"><KindBadge kind={r.kind} /><b className="min-w-0 truncate">{r.name}</b></div>
-                  <p className="mt-1 text-sm text-text-2"><span className="font-mono text-text">{r.machineCode}</span> · {r.kind === "TABLET" ? "1 device" : `${r.devices} devices`} · {validity(r.expires)}</p>
+                  <p className="mt-1 text-sm text-text-2"><span className="font-mono text-text">{r.machineCode}</span> · {r.kind !== "PC" ? "1 device" : `${r.devices} devices`} · {validity(r.expires)}</p>
                   <p className="mt-0.5 text-xs text-muted">{fmt(r.createdAt)}{r.issuedBy ? ` · by ${r.issuedBy}` : ""}{r.phone ? ` · ${r.phone}` : ""}{r.note ? ` · ${r.note}` : ""}</p>
                   <div className="mt-2"><CopyButton text={r.key} label="Copy key" /></div>
                 </li>
