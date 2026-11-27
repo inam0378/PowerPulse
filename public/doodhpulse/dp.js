@@ -70,7 +70,9 @@ var IC = {
   book: '<path d="M4 4h11a3 3 0 0 1 3 3v14H7a3 3 0 0 1-3-3z"/><path d="M4 18a3 3 0 0 1 3-3h11"/>',
   print: '<path d="M6 9V3h12v6M6 18H4v-7h16v7h-2M7 14h10v7H7z"/>',
   wa: '<path d="M4 20l1.3-4A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c0 3 2.5 5.5 5.5 5.5l1-1.6-2-1-1 1c-1-.5-1.8-1.3-2.3-2.3l1-1-1-2z"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>'
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  moon: '<path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>'
 };
 function ic(n) { return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + IC[n] + "</svg>"; }
 
@@ -399,7 +401,7 @@ function showReceipt(e) {
 /* ----- customers ----- */
 VIEWS.customers = function () {
   var q = S.q.toLowerCase(), rows = CUSTOMERS.filter(function (c) { return (!c.hidden || custBalance(c) !== 0) && (!q || (c.name + " " + (c.phone || "") + " " + (c.addr || "")).toLowerCase().indexOf(q) >= 0); }).sort(byName);
-  return topbar(t("Customers"), { back: true, right: '<button class="ib" data-act="addCust">' + ic("plus") + "</button>" }) + "<main>" +
+  return topbar(t("Customers"), { back: true, right: '<button class="ib" data-act="addCust" aria-label="' + t("Add customer") + '">' + ic("plus") + "</button>" }) + "<main>" +
     '<input class="in" id="cq" placeholder="' + t("Search") + '…" value="' + esc(S.q) + '" style="margin-bottom:12px">' +
     (rows.length ? '<div class="list">' + rows.map(function (c) { var b = custBalance(c); return '<button class="row btnrow" data-cust="' + c.id + '"><div class="grow"><div class="t">' + esc(c.name) + '</div><div class="s">' + esc([c.addr, c.phone].filter(Boolean).join(" · ")) + " " + shiftPill(c) + '</div></div><div class="amt num ' + (b > 0 ? "due" : b < 0 ? "adv" : "") + '">' + rs(b) + "</div></button>"; }).join("") + "</div>"
       : '<div class="empty">No customers yet.<br><br><button class="btn g" data-act="addCust">' + ic("plus") + " " + t("Add customer") + "</button></div>") +
@@ -514,14 +516,14 @@ VIEWS.delivery = function () {
   var st = deliveryStatus(date, shift), qtyTot = {};
   list.forEach(function (c) { deliveryLines(c, shift).forEach(function (l) { qtyTot[l.name + " " + l.unit] = (qtyTot[l.name + " " + l.unit] || 0) + l.qty; }); });
   return topbar(t("Delivery"), { back: true }) + "<main>" +
-    '<div class="seg"><button data-shift="am" class="' + (shift === "am" ? "on" : "") + '">☀ ' + t("Morning") + '</button><button data-shift="pm" class="' + (shift === "pm" ? "on" : "") + '">☾ ' + t("Evening") + "</button></div>" +
+    '<div class="seg"><button data-shift="am" class="' + (shift === "am" ? "on" : "") + '">' + ic("sun") + t("Morning") + '</button><button data-shift="pm" class="' + (shift === "pm" ? "on" : "") + '">' + ic("moon") + t("Evening") + "</button></div>" +
     '<input class="in" type="date" id="dDate" value="' + date + '" style="margin-bottom:12px">' +
     '<div class="card hero"><div class="g2"><div><div class="lbl">' + (shift === "am" ? t("Morning delivery") : t("Evening delivery")) + '</div><div class="big num">' + st.done + "/" + st.total + '</div></div><div><div class="lbl">' + t("Total") + "</div>" +
     Object.keys(qtyTot).map(function (k) { return '<div class="num" style="font-weight:700">' + esc(k.split(" ")[0]) + " " + qf(qtyTot[k]) + " " + esc(k.split(" ").slice(1).join(" ")) + "</div>"; }).join("") + "</div></div></div>" +
     (list.length ? '<div class="list">' + list.map(function (c, i) {
       var e = deliveryEntry(c, date, shift), lines = e && e.t === "sale" ? e.lines : deliveryLines(c, shift), amt = lines.reduce(function (a, l) { return a + l.amt; }, 0);
       var state = !e ? "" : e.t === "skip" ? "skip" : "on";
-      return '<div class="row"><span class="mut num" style="width:18px">' + (i + 1) + '</span><button class="grow" data-dedit="' + c.id + '" style="border:0;background:none;text-align:start;padding:0;min-width:0"><div class="t">' + esc(c.name) + '</div><div class="s">' + esc(c.addr || "") + '</div><div class="s num">' + esc(lines.map(function (l) { return l.name + " " + qf(l.qty) + " " + l.unit; }).join(", ")) + ' · <span class="pill ' + (state === "on" ? "g" : state === "skip" ? "" : "a") + '">' + rs(amt) + "</span></div></button>" +
+      return '<div class="row"><span class="mut num" style="width:18px">' + (i + 1) + '</span><button class="grow" style="min-height:48px" data-dedit="' + c.id + '" style="border:0;background:none;text-align:start;padding:0;min-width:0"><div class="t">' + esc(c.name) + '</div><div class="s">' + esc(c.addr || "") + '</div><div class="s num">' + esc(lines.map(function (l) { return l.name + " " + qf(l.qty) + " " + l.unit; }).join(", ")) + ' · <span class="pill ' + (state === "on" ? "g" : state === "skip" ? "" : "a") + '">' + rs(amt) + "</span></div></button>" +
         '<button class="check ' + state + '" data-dtog="' + c.id + '" aria-label="' + t("Deliver") + '">' + (state === "skip" ? t("Skip") : ic("check")) + "</button></div>";
     }).join("") + "</div>" + (st.done < st.total ? '<button class="btn g full" data-act="deliverAll">' + ic("check") + " " + t("Mark all delivered") + " (" + (st.total - st.done) + ")</button>" : "")
       : '<div class="empty">No customers on this round. Add daily items to a customer (Customers → Edit) to put them here.</div>') +
@@ -549,7 +551,7 @@ var EXP_CATS = ["Milk purchase", "Salary", "Rent", "Bills", "Other"];
 VIEWS.expenses = function () {
   var from = dk(new Date(new Date().getFullYear(), new Date().getMonth(), 1)), rows = ENTRIES.filter(function (e) { return e.t === "exp" && e.date >= from; }).sort(function (a, b) { return b.ts - a.ts; });
   var tot = rows.reduce(function (a, e) { return a + e.amount; }, 0);
-  return topbar(t("Expenses"), { back: true, right: '<button class="ib" data-act="addExp">' + ic("plus") + "</button>" }) + "<main>" +
+  return topbar(t("Expenses"), { back: true, right: '<button class="ib" data-act="addExp" aria-label="' + t("Add expense") + '">' + ic("plus") + "</button>" }) + "<main>" +
     '<div class="card hero"><div class="lbl">' + t("This month") + '</div><div class="big num">' + rs(tot) + "</div></div>" +
     '<button class="btn g full" data-act="addExp" style="margin-bottom:12px">' + ic("plus") + " " + t("Add expense") + "</button>" +
     (rows.length ? '<div class="list">' + rows.map(function (e) { return '<div class="row" data-exp="' + e.id + '" role="button" tabindex="0"><div class="grow"><div class="t">' + t(e.cat) + '</div><div class="s">' + fmtDate(e.date) + (e.note ? " · " + esc(e.note) : "") + '</div></div><div class="amt num due">' + rs(e.amount) + "</div></div>"; }).join("") + "</div>" : '<div class="empty">No expenses this month.</div>') +
@@ -573,7 +575,7 @@ function expForm(e) {
 
 /* ----- products ----- */
 VIEWS.products = function () {
-  return topbar(t("Products & rates"), { back: true, right: '<button class="ib" data-act="addProd">' + ic("plus") + "</button>" }) + "<main>" +
+  return topbar(t("Products & rates"), { back: true, right: '<button class="ib" data-act="addProd" aria-label="' + t("Add product") + '">' + ic("plus") + "</button>" }) + "<main>" +
     '<p class="mut">Tap a product to change its rate. New rates apply to new sales only; old bills keep their rate.</p>' +
     '<div class="list">' + PRODUCTS.slice().sort(function (a, b) { return (a.sort || 0) - (b.sort || 0); }).map(function (p) { return '<button class="row btnrow" data-prod="' + p.id + '"><div class="grow"><div class="t">' + esc(p.name) + (p.ur ? " · " + esc(p.ur) : "") + '</div><div class="s">' + (p.off ? '<span class="pill r">Hidden</span>' : "") + '</div></div><div class="amt num">' + rs(p.rate) + " / " + esc(p.unit) + "</div></button>"; }).join("") + "</div></main>" + bottomNav();
 };
