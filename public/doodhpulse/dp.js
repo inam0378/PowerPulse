@@ -3,7 +3,7 @@
    Nothing is sent to Power Pulse or any server. */
 (function () {
 "use strict";
-var VERSION = "1.0.0";
+var VERSION = "1.0.1";
 var SUPPORT_WA = "923100007049"; // Power Pulse WhatsApp (0310-0007049)
 var SUPPORT_TXT = "0310-0007049";
 // Public half of the Power Pulse license key pair (same pair as RestoPulse). Device codes here start with MD-.
@@ -115,13 +115,14 @@ function write(ops) {
       else if (o[1] === "del") s.delete(o[2]);
       else if (o[1] === "clear") s.clear();
     });
-    tr.oncomplete = function () { ok(); };
+    tr.oncomplete = function () { CACHE = null; ok(); };
     tr.onerror = tr.onabort = function () { no(new Error("Could not save on this phone" + (tr.error ? ": " + tr.error.message : "") + ". Phone storage may be full.")); };
   }).catch(function (e) { toast(e.message); throw e; });
 }
-function setMeta(k, v) { META[k] = v; return write([["meta", "put", v, k]]); }
-function putRow(store, arr, row) { var i = arr.findIndex(function (x) { return x.id === row.id; }); if (i >= 0) arr[i] = row; else arr.push(row); return write([[store, "put", row]]); }
-function delRow(store, arr, id) { var i = arr.findIndex(function (x) { return x.id === id; }); if (i >= 0) arr.splice(i, 1); return write([[store, "del", id]]); }
+// The phone storage is written first; the in-memory copy changes only after the write succeeded.
+function setMeta(k, v) { return write([["meta", "put", v, k]]).then(function () { META[k] = v; CACHE = null; }); }
+function putRow(store, arr, row) { return write([[store, "put", row]]).then(function () { var i = arr.findIndex(function (x) { return x.id === row.id; }); if (i >= 0) arr[i] = row; else arr.push(row); CACHE = null; }); }
+function delRow(store, arr, id) { return write([[store, "del", id]]).then(function () { var i = arr.findIndex(function (x) { return x.id === id; }); if (i >= 0) arr.splice(i, 1); CACHE = null; }); }
 
 /* ---------------- defaults (rates are guesses: owner edits them) ---------------- */
 var DEFAULT_PRODUCTS = [
@@ -164,15 +165,21 @@ function licenseState() {
 }
 
 /* ---------------- money maths ---------------- */
-function custBalance(c) {
-  var b = +c.opening || 0;
+// One pass over all entries builds every balance and the delivery index; rebuilt after any change.
+var CACHE = null;
+function idx() {
+  if (CACHE) return CACHE;
+  var bal = {}, dlv = {};
   ENTRIES.forEach(function (e) {
-    if (e.cust !== c.id) return;
-    if (e.t === "sale") b += (e.total - e.paid);
-    else if (e.t === "pay") b -= e.amount;
+    if (!e.cust) return;
+    if (e.t === "sale") bal[e.cust] = (bal[e.cust] || 0) + (e.total - e.paid);
+    else if (e.t === "pay") bal[e.cust] = (bal[e.cust] || 0) - e.amount;
+    if (e.t === "skip" || (e.t === "sale" && e.src === "delivery")) dlv[e.cust + "|" + e.date + "|" + e.shift] = e;
   });
-  return r2(b);
+  CACHE = { bal: bal, dlv: dlv };
+  return CACHE;
 }
+function custBalance(c) { return r2((+c.opening || 0) + (idx().bal[c.id] || 0)); }
 function summary(from, to) {
   var s = { sale: 0, cash: 0, credit: 0, pays: 0, exp: 0, n: 0, prods: {}, expCats: {} };
   ENTRIES.forEach(function (e) {
@@ -186,11 +193,11 @@ function summary(from, to) {
   s.net = s.cash + s.pays - s.exp;
   return s;
 }
-function nextNo() { var n = (+META.seq || 0) + 1; META.seq = n; return n; }
 function addEntry(e) {
   e.id = e.id || uid(); e.ts = e.ts || Date.now(); e.date = e.date || dk();
-  if (e.t === "sale" && !e.no) { e.no = nextNo(); ENTRIES.push(e); return write([["entries", "put", e], ["meta", "put", META.seq, "seq"]]).then(function () { return e; }); }
-  ENTRIES.push(e); return write([["entries", "put", e]]).then(function () { return e; });
+  var ops = [["entries", "put", e]], seq = null;
+  if (e.t === "sale" && !e.no) { seq = (+META.seq || 0) + 1; e.no = seq; ops.push(["meta", "put", seq, "seq"]); }
+  return write(ops).then(function () { if (seq) META.seq = seq; ENTRIES.push(e); CACHE = null; return e; }, function (err) { if (seq) delete e.no; throw err; });
 }
 
 /* ---------------- UI plumbing ---------------- */
@@ -260,7 +267,9 @@ function renderGate() {
     $("#gAct").onclick = function () {
       var k = $("#gKey").value.replace(/\s+/g, ""), l = verifyKey(k);
       if (!l) { toast("This key is not valid for this phone. Check you copied all of it."); return; }
-      setMeta("license", { key: k, at: Date.now() }).then(function () { var s = licenseState(); toast(s.status === "active" ? "Activated. Shukriya!" : "This key has already expired."); render(); });
+      // A new key from Power Pulse (different key, same or newer issue date) clears a clock that ran ahead, e.g. after a phone booted with a wrong date.
+      var old = META.license && verifyKey(META.license.key), fresh = !old || (k !== String(META.license.key).replace(/\s+/g, "") && String(l.iat || "") >= String(old.iat || ""));
+      (fresh ? write([["meta", "put", Date.now(), "clock"]]).then(function () { META.clock = Date.now(); }) : Promise.resolve()).then(function () { return setMeta("license", { key: k, at: Date.now() }); }).then(function () { var s = licenseState(); toast(s.status === "active" ? "Activated. Shukriya!" : "This key has already expired."); render(); });
     };
     if (expired) $("#gBk").onclick = downloadBackup;
     return true;
@@ -359,7 +368,7 @@ function bindSale() {
       if (!S.saleCust && pv < total) { toast("Choose a customer to give udhaar"); return; }
       this.disabled = true;
       addEntry({ t: "sale", src: "counter", cust: S.saleCust || null, lines: S.cart.map(function (l) { return { pid: l.pid, name: l.name, unit: l.unit, qty: l.qty, rate: l.rate, amt: l.amt }; }), total: total, paid: pv })
-        .then(function (e) { S.cart = []; render(); showReceipt(e); }, function () { $("#sSave").disabled = false; });
+        .then(function (e) { S.cart = []; S.saleCust = ""; render(); showReceipt(e); }, function () { $("#sSave").disabled = false; });
     };
   }
 }
@@ -470,10 +479,11 @@ function payForm(c) {
     setTimeout(function () { b.querySelector("#pA").focus(); }, 50);
     b.querySelector("#pS").onclick = function () {
       var a = r2(+b.querySelector("#pA").value); if (!(a > 0)) { toast("Enter the amount"); return; }
-      addEntry({ t: "pay", cust: c.id, amount: a, note: b.querySelector("#pN").value.trim(), date: b.querySelector("#pD").value || dk() }).then(function () {
+      var pd = b.querySelector("#pD").value || dk();
+      addEntry({ t: "pay", cust: c.id, amount: a, note: b.querySelector("#pN").value.trim(), date: pd }).then(function () {
         closeSheet(); render();
         var bal = custBalance(c);
-        confirmBox("Saved. Send a WhatsApp receipt to " + c.name + "?", t("WhatsApp"), function () { openWA(c.phone, (META.shop || {}).name + "\nPayment received: " + rs(a) + " on " + fmtDate(dk()) + "\nRemaining balance: " + rs(bal) + "\nShukriya!"); });
+        confirmBox("Saved. Send a WhatsApp receipt to " + c.name + "?", t("WhatsApp"), function () { openWA(c.phone, (META.shop || {}).name + "\nPayment received: " + rs(a) + " on " + fmtDate(pd) + "\nRemaining balance: " + rs(bal) + "\nShukriya!"); });
       });
     };
   });
@@ -499,7 +509,7 @@ function monthlyBill(c) {
 /* ----- delivery ----- */
 function shiftItems(c, shift) { return (shift === "am" ? c.am : c.pm) || {}; }
 function onRoute(c, shift) { return !c.hidden && (c.shift === shift || c.shift === "both") && Object.keys(shiftItems(c, shift)).some(function (id) { return prod(id); }); }
-function deliveryEntry(c, date, shift) { return ENTRIES.find(function (e) { return e.cust === c.id && e.date === date && e.shift === shift && (e.t === "skip" || (e.t === "sale" && e.src === "delivery")); }); }
+function deliveryEntry(c, date, shift) { return idx().dlv[c.id + "|" + date + "|" + shift]; }
 function deliveryStatus(date, shift) { var list = CUSTOMERS.filter(function (c) { return onRoute(c, shift); }); var done = list.filter(function (c) { return deliveryEntry(c, date, shift); }).length; return { total: list.length, done: done, shift: shift }; }
 function deliveryLines(c, shift, override) {
   var items = override || shiftItems(c, shift);
@@ -514,16 +524,16 @@ VIEWS.delivery = function () {
   var date = S.ddate || dk(), shift = S.shift;
   var list = CUSTOMERS.filter(function (c) { return onRoute(c, shift); }).sort(function (a, b) { return (a.route || 0) - (b.route || 0) || byName(a, b); });
   var st = deliveryStatus(date, shift), qtyTot = {};
-  list.forEach(function (c) { deliveryLines(c, shift).forEach(function (l) { qtyTot[l.name + " " + l.unit] = (qtyTot[l.name + " " + l.unit] || 0) + l.qty; }); });
+  list.forEach(function (c) { deliveryLines(c, shift).forEach(function (l) { var x = qtyTot[l.pid] || (qtyTot[l.pid] = { name: l.name, unit: l.unit, qty: 0 }); x.qty += l.qty; }); });
   return topbar(t("Delivery"), { back: true }) + "<main>" +
     '<div class="seg"><button data-shift="am" class="' + (shift === "am" ? "on" : "") + '">' + ic("sun") + t("Morning") + '</button><button data-shift="pm" class="' + (shift === "pm" ? "on" : "") + '">' + ic("moon") + t("Evening") + "</button></div>" +
     '<input class="in" type="date" id="dDate" value="' + date + '" style="margin-bottom:12px">' +
     '<div class="card hero"><div class="g2"><div><div class="lbl">' + (shift === "am" ? t("Morning delivery") : t("Evening delivery")) + '</div><div class="big num">' + st.done + "/" + st.total + '</div></div><div><div class="lbl">' + t("Total") + "</div>" +
-    Object.keys(qtyTot).map(function (k) { return '<div class="num" style="font-weight:700">' + esc(k.split(" ")[0]) + " " + qf(qtyTot[k]) + " " + esc(k.split(" ").slice(1).join(" ")) + "</div>"; }).join("") + "</div></div></div>" +
+    Object.keys(qtyTot).map(function (k) { var x = qtyTot[k], pp = prod(k); return '<div class="num" style="font-weight:700">' + esc(pp ? pName(pp) : x.name) + " " + qf(x.qty) + " " + esc(x.unit) + "</div>"; }).join("") + "</div></div></div>" +
     (list.length ? '<div class="list">' + list.map(function (c, i) {
       var e = deliveryEntry(c, date, shift), lines = e && e.t === "sale" ? e.lines : deliveryLines(c, shift), amt = lines.reduce(function (a, l) { return a + l.amt; }, 0);
       var state = !e ? "" : e.t === "skip" ? "skip" : "on";
-      return '<div class="row"><span class="mut num" style="width:18px">' + (i + 1) + '</span><button class="grow" style="min-height:48px" data-dedit="' + c.id + '" style="border:0;background:none;text-align:start;padding:0;min-width:0"><div class="t">' + esc(c.name) + '</div><div class="s">' + esc(c.addr || "") + '</div><div class="s num">' + esc(lines.map(function (l) { return l.name + " " + qf(l.qty) + " " + l.unit; }).join(", ")) + ' · <span class="pill ' + (state === "on" ? "g" : state === "skip" ? "" : "a") + '">' + rs(amt) + "</span></div></button>" +
+      return '<div class="row"><span class="mut num" style="width:18px">' + (i + 1) + '</span><button class="grow" data-dedit="' + c.id + '" style="min-height:48px;border:0;background:none;text-align:start;padding:0;min-width:0"><div class="t">' + esc(c.name) + '</div><div class="s">' + esc(c.addr || "") + '</div><div class="s num">' + esc(lines.map(function (l) { return l.name + " " + qf(l.qty) + " " + l.unit; }).join(", ")) + ' · <span class="pill ' + (state === "on" ? "g" : state === "skip" ? "" : "a") + '">' + rs(amt) + "</span></div></button>" +
         '<button class="check ' + state + '" data-dtog="' + c.id + '" aria-label="' + t("Deliver") + '">' + (state === "skip" ? t("Skip") : ic("check")) + "</button></div>";
     }).join("") + "</div>" + (st.done < st.total ? '<button class="btn g full" data-act="deliverAll">' + ic("check") + " " + t("Mark all delivered") + " (" + (st.total - st.done) + ")</button>" : "")
       : '<div class="empty">No customers on this round. Add daily items to a customer (Customers → Edit) to put them here.</div>') +
@@ -638,7 +648,7 @@ function csvExport() {
     out.push([e.date, fmtTime(e.ts), e.t === "sale" ? (e.src === "delivery" ? "Delivery" : "Counter sale") : e.t === "pay" ? "Payment received" : "Expense", e.no || "", c ? c.name : "", e.shift || "",
       e.lines ? e.lines.map(function (l) { return l.name + " " + qf(l.qty) + " " + l.unit + " @" + l.rate; }).join("; ") : "", e.total || "", e.t === "sale" ? e.paid : "", e.t === "sale" ? r2(e.total - e.paid) : "", e.t === "pay" ? e.amount : "", e.t === "exp" ? e.amount : "", e.cat || "", e.note || ""]);
   });
-  saveFile("doodhpulse-" + r[0] + "-to-" + r[1] + ".csv", "﻿" + out.map(function (row) { return row.map(q).join(","); }).join("\r\n"), "text/csv");
+  saveFile("doodhpulse-" + r[0] + "-to-" + r[1] + ".csv", "﻿" + out.map(function (row) { return row.map(q).join(","); }).join("\r\n"), "text/csv").catch(function () {});
 }
 
 /* ----- settings + backup ----- */
@@ -682,7 +692,7 @@ function saveFile(name, text, type) {
   var blob = new Blob([text], { type: type });
   var file; try { file = new File([blob], name, { type: type }); } catch (e) {}
   if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-    return navigator.share({ files: [file], title: name }).catch(function (e) { if (e && e.name !== "AbortError") dl(); });
+    return navigator.share({ files: [file], title: name }).catch(function (e) { if (e && e.name === "AbortError") throw e; dl(); });
   }
   dl(); return Promise.resolve();
   function dl() { var a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
@@ -691,13 +701,13 @@ function downloadBackup() {
   var meta = {}; Object.keys(META).forEach(function (k) { if (["install", "license", "clock", "pin"].indexOf(k) < 0) meta[k] = META[k]; });
   var data = { app: "doodhpulse", v: 1, at: new Date().toISOString(), shop: (META.shop || {}).name, meta: meta, products: PRODUCTS, customers: CUSTOMERS, entries: ENTRIES };
   var name = "doodhpulse-backup-" + dk() + ".json";
-  saveFile(name, JSON.stringify(data), "application/json").then(function () { return setMeta("lastBackup", Date.now()); }).then(function () { toast("Backup ready. Keep it on WhatsApp, Gmail or Drive."); if (S.view === "home" || S.view === "settings") render(); });
+  saveFile(name, JSON.stringify(data), "application/json").then(function () { return setMeta("lastBackup", Date.now()); }).then(function () { toast("Backup ready. Keep it on WhatsApp, Gmail or Drive."); if (S.view === "home" || S.view === "settings") render(); }, function () { toast("Backup was not saved. Try again."); });
 }
 function restoreBackup(f) {
   var rd = new FileReader();
   rd.onload = function () {
     var d; try { d = JSON.parse(rd.result); } catch (e) { toast("This is not a DoodhPulse backup file"); return; }
-    if (!d || d.app !== "doodhpulse" || !Array.isArray(d.entries)) { toast("This is not a DoodhPulse backup file"); return; }
+    if (!d || d.app !== "doodhpulse" || !Array.isArray(d.entries) || !Array.isArray(d.products) || !Array.isArray(d.customers)) { toast("This is not a DoodhPulse backup file"); return; }
     confirmBox("Replace ALL data on this phone with the backup from " + (d.at || "").slice(0, 10) + " (" + d.entries.length + " entries)?", "Restore", function () {
       var ops = [["products", "clear"], ["customers", "clear"], ["entries", "clear"]];
       d.products.forEach(function (x) { ops.push(["products", "put", x]); });
@@ -727,7 +737,7 @@ APP.addEventListener("click", function (ev) {
   var el = ev.target.closest("[data-go],[data-act],[data-cust],[data-shift],[data-dtog],[data-dedit],[data-range],[data-prod],[data-exp],[data-entry]");
   if (!el) return;
   var d = el.dataset;
-  if (d.go) { if (d.go === "sale" && S.view !== "sale") S.saleCust = S.saleCust || ""; go(d.go, d.shift ? { shift: d.shift } : null); return; }
+  if (d.go) { if (d.go === "sale" && S.view !== "sale") { S.saleCust = ""; S.cart = []; } go(d.go, d.shift ? { shift: d.shift } : null); return; }
   if (d.shift && !d.go) { S.shift = d.shift; render(); return; }
   if (d.cust) { go("customer", { custId: d.cust }); return; }
   if (d.range) { S.range = d.range; render(); return; }
