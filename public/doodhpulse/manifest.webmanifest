@@ -1,0 +1,17 @@
+{
+ "name": "DoodhPulse · Milk Shop (Offline)",
+ "short_name": "DoodhPulse",
+ "description": "Offline milk shop app: counter sale, daily delivery, customer khata and reports. Data stays on the phone.",
+ "id": "./app.html",
+ "start_url": "./app.html",
+ "scope": "./",
+ "display": "standalone",
+ "orientation": "portrait",
+ "background_color": "#0f2f57",
+ "theme_color": "#0f2f57",
+ "icons": [
+  { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+  { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+  { "src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+ ]
+}

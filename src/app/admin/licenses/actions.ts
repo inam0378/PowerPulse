@@ -14,10 +14,10 @@ export async function issueLicense(_: FormState, f: FormData): Promise<FormState
   try {
     const mc = str(f, "machineCode").toUpperCase().replace(/\s+/g, "");
     const kind = kindOf(mc);
-    if (!kind) return { error: "Machine code is not valid. Laptop/PC codes look like RP-1A2B-3C4D-5E6F, tablet codes like RT-1A2B-3C4D-5E6F." };
+    if (!kind) return { error: "Machine code is not valid. Laptop/PC codes look like RP-1A2B-3C4D-5E6F, tablet codes like RT-1A2B-3C4D-5E6F, DoodhPulse (milk shop) codes like MD-1A2B-3C4D-5E6F." };
     const name = str(f, "name").slice(0, 60);
-    if (!name) return { error: "Enter the restaurant name." };
-    const dev = kind === "TABLET" ? 1 : Math.max(1, Math.min(50, Number.parseInt(str(f, "devices"), 10) || 2));
+    if (!name) return { error: "Enter the restaurant or shop name." };
+    const dev = kind !== "PC" ? 1 : Math.max(1, Math.min(50, Number.parseInt(str(f, "devices"), 10) || 2));
     const v = str(f, "validity") || "L";
     let exp: string | null = null;
     if (v === "date") {

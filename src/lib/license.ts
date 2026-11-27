@@ -1,12 +1,12 @@
 import "server-only";
 import crypto from "node:crypto";
 
-// Public half of the RestoPulse license key pair. The PC and tablet apps check keys against it.
+// Public half of the Power Pulse license key pair. RestoPulse (PC, tablet) and DoodhPulse (milk shop app) check keys against it.
 export const LICENSE_PUBLIC_KEY = "MCowBQYDK2VwAyEAVho+IQcgjVHFSStEJGUa55LXYi8TYaTDCkaEZiCqc1Q=";
 export const LICENSE_ENV = "RESTOPULSE_LICENSE_PRIVATE_KEY";
 
-export type LicenseKind = "PC" | "TABLET";
-export const kindOf = (code: string): LicenseKind | null => (/^RP-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code) ? "PC" : /^RT-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code) ? "TABLET" : null);
+export type LicenseKind = "PC" | "TABLET" | "MILK";
+export const kindOf = (code: string): LicenseKind | null => (/^RP-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code) ? "PC" : /^RT-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code) ? "TABLET" : /^MD-[0-9A-F]{4}-[0-9A-F]{4}-[0-9A-F]{4}$/.test(code) ? "MILK" : null);
 
 /** The private key lives only in a Vercel environment variable, never in the code or the database. */
 function privateKey(): crypto.KeyObject | null {
