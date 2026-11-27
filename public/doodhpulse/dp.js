@@ -157,7 +157,12 @@ function clockNow() { // stops turning the phone's date back to stretch an expir
   if (n > seen + 60e3) { META.clock = n; write([["meta", "put", n, "clock"]]).catch(function () {}); }
   return Math.max(n, seen);
 }
+// TEMPORARY TEST MODE: only on this repo's Vercel branch previews (never git-main, never the real site).
+// The "-inam0378.vercel.app" suffix belongs to Power Pulse's Vercel account, so other accounts cannot copy it.
+// Remove this block before releasing.
+var TEST_MODE = /^power-pulse-git-(?!main-)[a-z0-9-]+-inam0378\.vercel\.app$/.test(location.hostname);
 function licenseState() {
+  if (TEST_MODE) return { status: "active", name: "TEST MODE (preview only)", exp: null };
   var l = META.license && verifyKey(META.license.key);
   if (!l) return { status: "inactive" };
   var exp = l.exp ? Date.parse(l.exp + "T23:59:59") : null;
@@ -222,7 +227,7 @@ function confirmBox(msg, yes, onYes, danger) {
 }
 function topbar(title, opts) {
   opts = opts || {};
-  return '<header class="top">' + (opts.back ? '<button class="ib back" data-act="back" aria-label="' + t("Back") + '">' + ic("back") + "</button>" : "") +
+  return (TEST_MODE ? '<div role="status" style="background:#c63a3a;color:#fff;text-align:center;font-weight:800;font-size:13px;padding:calc(4px + env(safe-area-inset-top)) 8px 4px;letter-spacing:.06em">TEST MODE · PREVIEW ONLY · NO LICENSE NEEDED</div>' : "") + '<header class="top">' + (opts.back ? '<button class="ib back" data-act="back" aria-label="' + t("Back") + '">' + ic("back") + "</button>" : "") +
     "<h1>" + esc(title) + "</h1>" + (opts.right || "") + "</header>";
 }
 function bottomNav() {

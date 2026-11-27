@@ -1,6 +1,6 @@
 /* DoodhPulse service worker: keeps every app file on the phone so the app opens with no internet.
    No data passes through here: customers, sales and khata live in this phone's storage (IndexedDB). */
-const CACHE = "doodhpulse-v1.0.1";
+const CACHE = "doodhpulse-v1.0.2-test";
 const FILES = ["index.html", "app.html", "dp.js", "nacl.min.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable.png", "apple-touch-icon.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES.map((f) => new Request(f, { cache: "reload" })))).then(() => self.skipWaiting()));
